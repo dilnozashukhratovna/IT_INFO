@@ -7,21 +7,6 @@ const bcrypt = require("bcrypt");
 
 const myJwt = require("../services/JwtService");
 
-// const generateAccessToken = (
-//     id,
-//     admin_is_active,
-//     admin_is_creator,
-//     adminRoles
-// ) => {
-//     const payload = {
-//         id,
-//         admin_is_active,
-//         admin_is_creator,
-//         adminRoles,
-//     };
-//     return jwt.sign(payload, config.get("secret"), { expiresIn: "1h" });
-// };
-
 const addAdmin = async (req, res) => {
     try {
         const { error, value } = adminValidation(req.body);
@@ -142,7 +127,7 @@ const loginAdmin = async (req, res) => {
         const payload = {
             id: admin._id,
             is_expert: admin.is_expert,
-            adminRoles: ["READ", "WRITE"],
+            adminRoles: ["READ", "WRITE", "CHANGE", "DELETE"],
         };
         const tokens = myJwt.generateTokens(payload);
         console.log(tokens);
