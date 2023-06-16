@@ -2,19 +2,20 @@ const { errorHandler } = require("../helpers/error_handler");
 const Author = require("../models/Author");
 const { default: mongoose } = require("mongoose");
 const { authorValidation } = require("../validations/author");
-const jwd = require("jsonwebtoken");
+// const jwd = require("jsonwebtoken");
 const config = require("config");
-
-const generateAccessToken = (id, is_expert, authorRoles) => {
-    const payload = {
-        id,
-        is_expert,
-        authorRoles,
-    };
-    return jwd.sign(payload, config.get("secret"), { expiresIn: "1h" });
-};
 const bcrypt = require("bcrypt");
 
+const myJwt = require("../services/JwtService");
+
+// const generateAccessToken = (id, is_expert, authorRoles) => {
+//     const payload = {
+//         id,
+//         is_expert,
+//         authorRoles,
+//     };
+//     return jwd.sign(payload, config.get("secret"), { expiresIn: "1h" });
+// };
 
 const addAuthor = async (req, res) => {
     try {
@@ -140,15 +141,46 @@ const loginAuthor = async (req, res) => {
                 .status(400)
                 .send({ message: "Email yoki parol noto'g'ri" });
 
-        const token = generateAccessToken(author._id, author.is_expert, [
-            "READ",
-            "WRITE",
-        ]);
+        const payload = {
+            id: author._id,
+            is_expert: author.is_expert,
+            authorRoles: ["READ", "WRITE"],
+        };
+        const tokens = myJwt.generateTokens(payload);
+        console.log(tokens);
 
-        res.status(200).send({ token: token });
+        // const token = generateAccessToken(author._id, author.is_expert, [
+        //     "READ",
+        //     "WRITE",
+        // ]);
+
+        author.author_token = tokens.refreshToken;
+        await author.save();
+
+        res.cookie("refreshToken", tokens.refreshToken, {
+            maxAge: config.get("refresh_ms"),
+            httpOnly: true,
+        });
+
+        res.status(200).send({ ...tokens });
     } catch (error) {
         errorHandler(res, error);
     }
+};
+
+const logoutAuthor = async (req, res) => {
+    const { refreshToken } = req.cookies;
+    let author;
+    if (!refreshToken)
+        return res.status(400).send({ message: "Token topilmadi" });
+    author = await Author.findOneAndUpdate(
+        { author_token: refreshToken },
+        { author_token: "" },
+        { new: true }
+    );
+    if (!author) return res.status(400).send({ message: "Token topilmadi" });
+    res.clearCookie("refreshToken");
+    return res.status(200).send({ author });
 };
 
 // const loginAuthor = async (req, res) => {
@@ -197,4 +229,5 @@ module.exports = {
     updateAuthor,
     deleteAuthor,
     loginAuthor,
+    logoutAuthor,
 };

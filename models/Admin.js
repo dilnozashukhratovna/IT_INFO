@@ -28,6 +28,9 @@ const adminSchema = new Schema(
         updated_date: {
             type: Date,
         },
+        admin_token: {
+            type: String,
+        },
     },
     {
         versionKey: false,

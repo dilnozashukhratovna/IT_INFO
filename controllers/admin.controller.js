@@ -2,25 +2,25 @@ const { errorHandler } = require("../helpers/error_handler");
 const Admin = require("../models/Admin");
 const { default: mongoose } = require("mongoose");
 const { adminValidation } = require("../validations/admin");
-const jwt = require('jsonwebtoken');
 const config = require('config');
-
 const bcrypt = require("bcrypt");
 
-const generateAccessToken = (
-    id,
-    admin_is_active,
-    admin_is_creator,
-    adminRoles
-) => {
-    const payload = {
-        id,
-        admin_is_active,
-        admin_is_creator,
-        adminRoles,
-    };
-    return jwt.sign(payload, config.get("secret"), { expiresIn: "1h" });
-};
+const myJwt = require("../services/JwtService");
+
+// const generateAccessToken = (
+//     id,
+//     admin_is_active,
+//     admin_is_creator,
+//     adminRoles
+// ) => {
+//     const payload = {
+//         id,
+//         admin_is_active,
+//         admin_is_creator,
+//         adminRoles,
+//     };
+//     return jwt.sign(payload, config.get("secret"), { expiresIn: "1h" });
+// };
 
 const addAdmin = async (req, res) => {
     try {
@@ -139,19 +139,42 @@ const loginAdmin = async (req, res) => {
                 .status(400)
                 .send({ message: "Email yoki parol noto'g'ri" });
 
-        const token = generateAccessToken(admin._id, admin.is_expert, [
-            "READ",
-            "WRITE",
-            "CHANGE",
-            "DELETE"
-        ]);
+        const payload = {
+            id: admin._id,
+            is_expert: admin.is_expert,
+            adminRoles: ["READ", "WRITE"],
+        };
+        const tokens = myJwt.generateTokens(payload);
+        console.log(tokens);
 
-        res.status(200).send({ token: token });
+        admin.admin_token = tokens.refreshToken;
+        await admin.save();
 
-        res.status(200).send({ message: "Tizimga xush kelibsiz!" });
+        res.cookie("refreshToken", tokens.refreshToken, {
+            maxAge: config.get("refresh_ms"),
+            httpOnly: true,
+        });
+
+
+        res.status(200).send({...tokens});
     } catch (error) {
         errorHandler(res, error);
     }
+};
+
+const logoutAdmin = async (req, res) => {
+    const { refreshToken } = req.cookies;
+    let admin;
+    if (!refreshToken)
+        return res.status(400).send({ message: "Token topilmadi" });
+    admin = await Admin.findOneAndUpdate(
+        { admin_token: refreshToken },
+        { admin_token: "" },
+        { new: true }
+    );
+    if (!admin) return res.status(400).send({ message: "Token topilmadi" });
+    res.clearCookie("refreshToken");
+    return res.status(200).send({ admin });
 };
 
 const deleteAdmin = async (req, res) => {
@@ -176,4 +199,5 @@ module.exports = {
     updateAdmin,
     deleteAdmin,
     loginAdmin,
+    logoutAdmin,
 };

@@ -1,7 +1,6 @@
-const jwt = require('jsonwebtoken');
-const config = require('config');
+const myJwt = require("../services/JwtService");
 
-module.exports = function (req, res, next) {
+module.exports = async function (req, res, next) {
     if (req.method == "OPTIONS") {
         next();
     }
@@ -14,16 +13,20 @@ module.exports = function (req, res, next) {
         }
 
         console.log(authorization);
-        const bearer = authorization.split(" ")[0]
+        const bearer = authorization.split(" ")[0];
         const token = authorization.split(" ")[1];
 
-        if(bearer!="Bearer" || !token){
+        if (bearer != "Bearer" || !token) {
             return res.status(403).json({
                 message: "Admin ro'yxatdan o'tmagan (token berilmagan)",
             });
         }
 
-        const decodedToken = jwt.verify(token, config.get("secret"))
+        const [error, decodedToken] = await to(myJwt.verifyAccess(token));
+        if (error) {
+            return res.status(403).json({ message: error.message });
+        }
+
         console.log(decodedToken);
 
         next();
@@ -34,3 +37,10 @@ module.exports = function (req, res, next) {
         });
     }
 };
+
+async function to(promise) {
+    return promise
+        .then((response) => [null, response])
+        .catch((error) => [error]);
+}
+

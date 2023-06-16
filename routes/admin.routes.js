@@ -6,6 +6,7 @@ const {
     updateAdmin,
     deleteAdmin,
     loginAdmin,
+    logoutAdmin,
 } = require("../controllers/admin.controller");
 const adminPolice = require("../middleware/adminPolice");
 const {
@@ -37,6 +38,7 @@ const router = Router();
 
 router.post("/", addAdmin);
 router.post("/login", loginAdmin);
+router.post("/logout", logoutAdmin);
 router.get("/", getAdmins);
 router.get("/:id", getAdminsById);
 router.put("/:id", updateAdmin);
