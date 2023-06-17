@@ -38,6 +38,9 @@ const userSchema = new Schema(
         user_is_active: {
             type: Boolean,
         },
+        user_token: {
+            type: String,
+        },
     },
     {
         versionKey: false,
