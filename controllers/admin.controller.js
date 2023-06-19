@@ -9,10 +9,10 @@ const myJwt = require("../services/JwtService");
 
 const addAdmin = async (req, res) => {
     try {
-        const { error, value } = adminValidation(req.body);
-        if (error) {
-            return res.status(400).send({ message: error.details[0].message });
-        }
+        // const { error, value } = adminValidation(req.body);
+        // if (error) {
+        //     return res.status(400).send({ message: error.details[0].message });
+        // }
 
         const {
             admin_name,
@@ -22,9 +22,9 @@ const addAdmin = async (req, res) => {
             admin_is_creator,
             created_date,
             updated_date,
-        } = value;
+        } = req.body;
 
-        console.log(value);
+        // console.log(value);
 
         const admin = await Admin.findOne({ admin_email });
         if (admin) {

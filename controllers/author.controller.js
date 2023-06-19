@@ -19,10 +19,10 @@ const myJwt = require("../services/JwtService");
 
 const addAuthor = async (req, res) => {
     try {
-        const { error, value } = authorValidation(req.body);
-        if (error) {
-            return res.status(400).send({ message: error.details[0].message });
-        }
+        // const { error, value } = authorValidation(req.body);
+        // if (error) {
+        //     return res.status(400).send({ message: error.details[0].message });
+        // }
 
         const {
             author_first_name,
@@ -35,9 +35,9 @@ const addAuthor = async (req, res) => {
             author_position,
             author_photo,
             is_expert,
-        } = value;
+        } = req.body;
 
-        console.log(value);
+        // console.log(value);
 
         const author = await Author.findOne({ author_email });
         if (author) {
@@ -122,6 +122,39 @@ const updateAuthor = async (req, res) => {
     } catch (error) {
         errorHandler(res, error);
     }
+};
+
+const refreshAuthorToken = async (req, res) => {
+    const { refreshToken } = req.cookies;
+    if (!refreshToken)
+        return res.status(400).send({ message: "Token topilmadi" });
+    const authorDataFromCookie = await myJwt.verifyRefresh(refreshToken);
+
+    const authorDataFromDB = await Author.findOne({
+        author_token: refreshToken,
+    });
+    if (!authorDataFromDB || !authorDataFromCookie) {
+        return res.status(400).send({ message: "Author ro'yxatdan o'tmagan" });
+    }
+
+    const author = await Author.findById(authorDataFromCookie.id);
+    if (!author) return res.status(400).send({ message: "ID notogri" });
+
+    const payload = {
+        id: author._id,
+        is_expert: author.is_expert,
+        authorRoles: ["READ", "WRITE"],
+    };
+    const tokens = myJwt.generateTokens(payload);
+    author.author_token = tokens.refreshToken;
+    await author.save();
+
+    res.cookie("refreshToken", tokens.refreshToken, {
+        maxAge: config.get("refresh_ms"),
+        httpOnly: true,
+    });
+
+    res.status(200).send({ ...tokens });
 };
 
 const loginAuthor = async (req, res) => {
@@ -230,4 +263,5 @@ module.exports = {
     deleteAuthor,
     loginAuthor,
     logoutAuthor,
+    refreshAuthorToken,
 };

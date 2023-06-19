@@ -9,10 +9,10 @@ const myJwt = require("../services/JwtService");
 
 const addUser = async (req, res) => {
     try {
-        const { error, value } = userValidation(req.body);
-        if (error) {
-            return res.status(400).send({ message: error.details[0].message });
-        }
+        // const { error, value } = userValidation(req.body);
+        // if (error) {
+        //     return res.status(400).send({ message: error.details[0].message });
+        // }
 
         const {
             user_name,
@@ -23,9 +23,9 @@ const addUser = async (req, res) => {
             created_date,
             updated_date,
             user_is_active,
-        } = value;
+        } = req.body;
 
-        console.log(value);
+        // console.log(value);
 
         const user = await User.findOne({ user_email });
         if (user) {

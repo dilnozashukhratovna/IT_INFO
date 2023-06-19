@@ -1,4 +1,5 @@
 const { Router } = require("express");
+const Validator = require("../middleware/validator");
 const {
     addAdmin,
     getAdmins,
@@ -36,8 +37,8 @@ const {
 
 const router = Router();
 
-router.post("/", addAdmin);
-router.post("/login", loginAdmin);
+router.post("/", Validator("admin"), addAdmin);
+router.post("/login", Validator("admin_email_pass"), loginAdmin);
 router.post("/logout", logoutAdmin);
 router.get("/", getAdmins);
 router.get("/:id", getAdminsById);
@@ -58,6 +59,6 @@ router.delete("/:id/deleteDsc", adminPolice, deleteDescription);
 router.get("/getSyn", adminPolice, getSynonyms);
 router.get("/getCtg", adminPolice, getCategorys);
 router.get("/getDct", adminPolice, getTerms);
-router.get("/getDsc", adminPolice, getDescriptions)
+router.get("/getDsc", adminPolice, getDescriptions);
 
 module.exports = router;
