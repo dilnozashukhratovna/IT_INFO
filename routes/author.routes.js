@@ -10,6 +10,7 @@ const {
     loginAuthor,
     logoutAuthor,
     refreshAuthorToken,
+    authorActivate,
 } = require("../controllers/author.controller");
 
 const authorPolice = require("../middleware/authorPolice");
@@ -22,9 +23,15 @@ router.post("/", Validator("author"), addAuthor);
 router.post("/login", Validator("author_email_pass"), loginAuthor);
 router.post("/logout", logoutAuthor);
 router.get("/", authorPolice || adminPolice, getAuthors);
-router.get("/:id", authorRolesPolice(["READ", "WRITE"]), getAuthorsById);
+router.get(
+    "/:id",
+    // authorRolesPolice(["READ", "WRITE"]),
+    authorPolice,
+    getAuthorsById
+);
 router.put("/:id", updateAuthor);
-router.delete("/:id", deleteAuthor);
+router.delete("/:id", authorPolice, deleteAuthor);
 router.post("/refresh", refreshAuthorToken);
+router.get("/activate/:link", authorActivate);
 
 module.exports = router;

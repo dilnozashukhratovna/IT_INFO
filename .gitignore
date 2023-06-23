@@ -2,3 +2,8 @@ config
 node_modules
 package-lock.json
 .vscode
+temp.json
+.env
+.env.development
+.env.production
+log

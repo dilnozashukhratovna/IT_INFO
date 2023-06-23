@@ -1,10 +1,12 @@
 const { errorHandler } = require("../helpers/error_handler");
 const User = require("../models/User");
 const { default: mongoose } = require("mongoose");
-const { userValidation } = require("../validations/user");
+// const { userValidation } = require("../validations/user");
 const config = require("config");
 const bcrypt = require("bcrypt");
+const uuid = require("uuid");
 
+const mailService = require("../services/MailService");
 const myJwt = require("../services/JwtService");
 
 const addUser = async (req, res) => {
@@ -22,7 +24,6 @@ const addUser = async (req, res) => {
             user_photo,
             created_date,
             updated_date,
-            user_is_active,
         } = req.body;
 
         // console.log(value);
@@ -33,6 +34,8 @@ const addUser = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(user_password, 7);
+        const user_activation_link = uuid.v4();
+
 
         const newUser = await User({
             user_name,
@@ -42,11 +45,53 @@ const addUser = async (req, res) => {
             user_photo,
             created_date,
             updated_date,
-            user_is_active,
+            user_activation_link,
         });
 
         await newUser.save();
-        res.status(200).send({ message: "Yangi user qoshildi" });
+        await mailService.sendActivationMail(
+            user_email,
+            `${config.get("api_url")}/api/user/activate/${user_activation_link}`
+        );
+
+        const payload = {
+            id: newUser._id,
+            userRoles: ["READ", "WRITE", 'CHANGE', 'DELETE'],
+            user_is_active: newUser.user_is_active,
+        };
+
+        const tokens = myJwt.generateTokens(payload);
+        newUser.user_token = tokens.refreshToken;
+        await newUser.save();
+
+        res.cookie("refreshToken", tokens.refreshToken, {
+            maxAge: config.get("refresh_ms"),
+            httpOnly: true,
+        });
+
+        res.status(200).send({ ...tokens, user: payload });
+    } catch (error) {
+        errorHandler(res, error);
+    }
+};
+
+const userActivate = async (req, res) => {
+    try {
+        const user = await User.findOne({
+            user_activation_link: req.params.link,
+        });
+        if (!user) {
+            return res.status(400).send({ message: "Bunday user topilmadi" });
+        }
+        if (user.user_is_active) {
+            return res.status(400).send({ message: "User already activated" });
+        }
+        user.user_is_active = true;
+        await user.save();
+        res.status(200).send({
+            user_is_active: user.user_is_active,
+            message: "user activated",
+        });
     } catch (error) {
         errorHandler(res, error);
     }
@@ -95,7 +140,6 @@ const updateUser = async (req, res) => {
                     user_photo: req.body.user_photo,
                     created_date: req.body.created_date,
                     updated_date: req.body.updated_date,
-                    user_is_active: req.body.user_is_active,
                 },
             }
         );
@@ -184,4 +228,5 @@ module.exports = {
     deleteUser,
     loginUser,
     logoutUser,
+    userActivate,
 };

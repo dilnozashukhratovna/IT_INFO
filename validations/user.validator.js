@@ -9,7 +9,6 @@ const userSchema = Joi.object({
     user_photo: Joi.string().default("/photos/avatar.jpg"),
     created_date: Joi.date(),
     updated_date: Joi.date(),
-    user_is_active: Joi.boolean().default(false),
 });
 
 module.exports = userSchema

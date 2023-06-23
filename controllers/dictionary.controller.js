@@ -33,7 +33,7 @@ const getTerms = async (req, res) => {
         if (!terms) {
             return res.status(400).send({ message: "Termlar topilmadi" });
         }
-        res.json(terms);
+        res.json({data: terms});
     } catch (error) {
         errorHandler(res, error);
     }

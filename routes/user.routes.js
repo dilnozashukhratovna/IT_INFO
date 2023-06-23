@@ -9,6 +9,7 @@ const {
     updateUser,
     deleteUser,
     logoutUser,
+    userActivate,
 } = require("../controllers/user.controller");
 const router = express.Router();
 
@@ -19,5 +20,6 @@ router.get("/", getUsers);
 router.get("/:id", getUsersById);
 router.put("/:id", updateUser);
 router.delete("/:id", deleteUser);
+router.get("/activate/:id", userActivate)
 
 module.exports = router;
