@@ -70,19 +70,6 @@ app.set("views", "views");
 app.use(express.static("views"));
 
 
-
-// const hbs = exHbs.create({
-//     defaultLayout: "main",
-//     extname: "hbs",
-// });
-
-// app.engine("hbs", hbs.engine);
-
-// app.set("view engine", "hbs"); // Use lowercase for the view engine name
-// app.set("views", path.join(__dirname, "views")); // Use path.join to specify the views directory
-// app.use(express.static("public")); // Use a different directory for your static files
-
-
 // app.use(expressWinstonLogger);
 app.use(mainRouter);
 // app.use(expressWinstonErrorLogger);
