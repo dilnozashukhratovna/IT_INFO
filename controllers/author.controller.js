@@ -84,7 +84,7 @@ const addAuthor = async (req, res) => {
 
         res.cookie("refreshToken", tokens.refreshToken, {
             maxAge: config.get("refresh_ms"),
-            httpOnly: true,
+            // httpOnly: true,
         });
 
         res.status(200).send({ ...tokens, author: payload });
