@@ -20,7 +20,7 @@ const adminSchema = new Schema(
             type: Boolean,
         },
         admin_is_creator: {
-            type: Boolean,
+            type: Boolean, 
         },
         created_date: {
             type: Date,
